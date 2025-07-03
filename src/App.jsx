@@ -33,9 +33,9 @@ const MIN_STAGE = 1;
 const MAX_STAGE = 10;
 
 export default function App() {
-  const [uploadedImages, setUploadedImages] = useState([]); // 업로드한 전체 이미지
-  const [selectedImages, setSelectedImages] = useState([]); // 체크된 이미지
-  const [stage, setStage] = useState(MIN_STAGE); // 현재 단계
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [stage, setStage] = useState(MIN_STAGE);
   const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
   const [matched, setMatched] = useState([]);
@@ -45,7 +45,7 @@ export default function App() {
   const [cardBackColors, setCardBackColors] = useState([]);
   const [grid, setGrid] = useState({ rows: 2, cols: 2 });
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [hinting, setHinting] = useState(false); // 힌트 기능 상태
+  const [hinting, setHinting] = useState(false);
 
   // 고정 로고/이름
   const radiotLogo = "/logo.png";
@@ -459,4 +459,90 @@ export default function App() {
                         return (
                           <button
                             key={idx}
-                            className="card-btn
+                            className="card-btn"
+                            onClick={() => handleFlip(idx)}
+                            style={{
+                              background: (flipped.includes(idx) || matched.includes(idx)) ? "#fff" : "#ffe4e1",
+                              opacity: hinting ? 0.98 : 1,
+                              marginRight: "2vw"
+                            }}
+                            disabled={hinting}
+                          >
+                            {(flipped.includes(idx) || matched.includes(idx)) ? (
+                              <img src={img} alt="card" className="card-img" />
+                            ) : (
+                              <div className="card-back">?</div>
+                            )}
+                          </button>
+                        );
+                      })}
+                      {/* 오른쪽 빈칸 */}
+                      {Array(rightPad).fill(0).map((_, i) =>
+                        <div key={`rp${i}`} style={{ width: "18vw", minWidth: 72, maxWidth: 108, background: "none" }} />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              // 데스크탑: 기존 방식(grid)
+              <div className="card-grid">
+                {cards.map((img, idx) => (
+                  <button
+                    key={idx}
+                    className="card-btn"
+                    onClick={() => handleFlip(idx)}
+                    style={{
+                      background: (flipped.includes(idx) || matched.includes(idx)) ? "#fff" : "#ffe4e1",
+                      opacity: hinting ? 0.98 : 1
+                    }}
+                    disabled={hinting}
+                  >
+                    {(flipped.includes(idx) || matched.includes(idx)) ? (
+                      <img src={img} alt="card" className="card-img" />
+                    ) : (
+                      <div className="card-back">?</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 힌트 버튼 */}
+            <button
+              onClick={handleHint}
+              className="btn-nice"
+              style={{ marginBottom: '0.7em', background: "#ffe3f4", color: "#c84070", border: "1.5px solid #ffd0f5" }}
+              disabled={hinting}
+            >
+              🔍 힌트 보기
+            </button>
+
+            <div className="try-txt" style={{ margin: "1vw" }}>시도: {tries}</div>
+
+            <button onClick={handleRestart} className="btn-nice" style={{ marginTop: '1vw', marginBottom: "0.3vw" }}>
+              다시 섞기
+            </button>
+
+            {gameClear && (
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop:"1vw" }}>
+                <div className="success-txt">{stage < Math.min(selectedImages.length-1, MAX_STAGE) ? "클리어! 🎉" : "최고 단계 클리어! 🎉"}</div>
+                {stage < Math.min(selectedImages.length-1, MAX_STAGE) &&
+                  <button onClick={handleNextStage} className="btn-nice" style={{marginTop:'0.5em'}}>
+                    다음 단계로!
+                  </button>
+                }
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 제작자 표기 */}
+        <div className="creator-box">
+          <img src={radiotLogo} alt="RADIOT LAB 로고" className="logo-img" />
+          <span>by <b>{creatorName}</b></span>
+        </div>
+      </div>
+    </div>
+  );
+}
