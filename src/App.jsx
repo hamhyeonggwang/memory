@@ -15,8 +15,22 @@ function shuffle(arr) {
   return arr.slice().sort(() => Math.random() - 0.5);
 }
 
+// 모바일 환경 체크
+function isMobile() {
+  return window.innerWidth <= 600;
+}
+
+// 모바일용: 카드를 행별로 분리
+function getRowsForMobile(cards, cols) {
+  const rows = [];
+  for (let i = 0; i < cards.length; i += cols) {
+    rows.push(cards.slice(i, i + cols));
+  }
+  return rows;
+}
+
 const MIN_STAGE = 1;
-const MAX_STAGE = 10; // 10단계
+const MAX_STAGE = 10;
 
 export default function App() {
   const [uploadedImages, setUploadedImages] = useState([]); // 업로드한 전체 이미지
@@ -31,8 +45,9 @@ export default function App() {
   const [cardBackColors, setCardBackColors] = useState([]);
   const [grid, setGrid] = useState({ rows: 2, cols: 2 });
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [hinting, setHinting] = useState(false); // 힌트 기능 상태
 
-  // RADIOT LAB 고정 로고
+  // 고정 로고/이름
   const radiotLogo = "/logo.png";
   const creatorName = "RADIOT LAB";
 
@@ -56,7 +71,7 @@ export default function App() {
       })
     ).then((imgDataList) => {
       setUploadedImages(imgDataList.slice(0, 12));
-      setSelectedImages(imgDataList.slice(0, 12)); // 기본 전체 선택
+      setSelectedImages(imgDataList.slice(0, 12));
       setStage(MIN_STAGE);
       setGameStarted(false);
       setGameClear(false);
@@ -68,7 +83,7 @@ export default function App() {
     setSelectedImages(prev =>
       prev.includes(img)
         ? prev.filter(i => i !== img)
-        : prev.length < 12 ? [...prev, img] : prev // 최대 12장
+        : prev.length < 12 ? [...prev, img] : prev
     );
     setStage(MIN_STAGE);
     setGameStarted(false);
@@ -77,7 +92,6 @@ export default function App() {
 
   // 단계별 사용할 카드쌍 수
   function getPairCountByStage(stage, maxPairs) {
-    // 1단계 2쌍, 2단계 3쌍, ... 최대 11쌍까지, 선택 이미지수에 따라 제한
     return Math.min(stage + 1, maxPairs);
   }
 
@@ -99,6 +113,7 @@ export default function App() {
     setGrid(getGrid(tempCards.length, windowWidth));
     setGameStarted(true);
     setGameClear(false);
+    setHinting(false);
   };
 
   // 그리드 재계산
@@ -108,14 +123,14 @@ export default function App() {
 
   // 카드 클릭 처리
   const handleFlip = (idx) => {
-    if (!gameStarted || gameClear) return;
+    if (!gameStarted || gameClear || hinting) return;
     if (flipped.length === 2 || flipped.includes(idx) || matched.includes(idx)) return;
     setFlipped(prev => [...prev, idx]);
   };
 
   // 매칭 체크
   useEffect(() => {
-    if (flipped.length === 2) {
+    if (flipped.length === 2 && !hinting) {
       setTries(t => t + 1);
       const [i, j] = flipped;
       if (cards[i] === cards[j] && i !== j) {
@@ -123,7 +138,7 @@ export default function App() {
       }
       setTimeout(() => setFlipped([]), 600);
     }
-  }, [flipped, cards]);
+  }, [flipped, cards, hinting]);
 
   // 게임 종료 체크
   useEffect(() => {
@@ -132,7 +147,7 @@ export default function App() {
     }
   }, [matched, cards, gameStarted]);
 
-  // 다시 섞기(현재 단계)
+  // 다시 섞기
   const handleRestart = () => {
     startStage(stage);
   };
@@ -148,7 +163,6 @@ export default function App() {
       setGameClear(false);
       return;
     }
-    // 이미지 수만큼만 진행 가능
     if (getPairCountByStage(nextStage, maxPairs) > maxPairs) {
       alert("이미지가 부족합니다. 이미지를 더 추가해 주세요!");
       setGameStarted(false);
@@ -159,10 +173,21 @@ export default function App() {
     setTimeout(() => startStage(nextStage), 300);
   };
 
-  // 다른 난이도 직접 선택 (게임화면 상단)
+  // 다른 난이도 직접 선택
   const handleStageSelect = (targetStage) => {
     setStage(targetStage);
     setTimeout(() => startStage(targetStage), 100);
+  };
+
+  // 힌트 버튼 기능
+  const handleHint = () => {
+    if (hinting) return;
+    setHinting(true);
+    setFlipped(Array.from({ length: cards.length }, (_, i) => i));
+    setTimeout(() => {
+      setFlipped([]);
+      setHinting(false);
+    }, 1500);
   };
 
   // 배경색 밝게
@@ -330,11 +355,9 @@ export default function App() {
         object-fit: cover;
         margin-right: 0.1em;
       }
-      `}
-      </style>
+      `}</style>
 
       <div className="card-panel">
-
         <div className="game-title">
           <span className="emoji"></span> memory game
         </div>
@@ -412,52 +435,28 @@ export default function App() {
             </div>
 
             {/* 카드판 */}
-            <div className="card-grid">
-              {cards.map((img, idx) => (
-                <button
-                  key={idx}
-                  className="card-btn"
-                  onClick={() => handleFlip(idx)}
-                  style={{
-                    background: (flipped.includes(idx) || matched.includes(idx))
-                      ? "#fff"
-                      : "#ffe4e1"
-                  }}
-                >
-                  {(flipped.includes(idx) || matched.includes(idx)) ? (
-                    <img src={img} alt="card" className="card-img" />
-                  ) : (
-                    <div className="card-back">?</div>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            <div className="try-txt" style={{ margin: "1vw" }}>시도: {tries}</div>
-
-            <button onClick={handleRestart} className="btn-nice" style={{marginTop:'1vw', marginBottom:"0.3vw"}}>
-              다시 섞기
-            </button>
-
-            {gameClear && (
-              <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop:"1vw" }}>
-                <div className="success-txt">{stage < Math.min(selectedImages.length-1, MAX_STAGE) ? "클리어! 🎉" : "최고 단계 클리어! 🎉"}</div>
-                {stage < Math.min(selectedImages.length-1, MAX_STAGE) &&
-                  <button onClick={handleNextStage} className="btn-nice" style={{marginTop:'0.5em'}}>
-                    다음 단계로!
-                  </button>
-                }
-              </div>
-            )}
-          </>
-        )}
-
-        {/* 제작자 표기 */}
-        <div className="creator-box">
-          <img src={radiotLogo} alt="RADIOT LAB 로고" className="logo-img" />
-          <span>by <b>{creatorName}</b></span>
-        </div>
-      </div>
-    </div>
-  );
-}
+            {isMobile() ? (
+              // 모바일: 센터 대칭 행별 렌더링
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "3vw", alignItems: "center", marginBottom: "2vw" }}>
+                {getRowsForMobile(cards, grid.cols).map((row, rIdx) => {
+                  const spaces = grid.cols - row.length;
+                  const leftPad = Math.floor(spaces / 2);
+                  const rightPad = spaces - leftPad;
+                  return (
+                    <div key={rIdx} style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      width: "100%",
+                      minHeight: 0,
+                    }}>
+                      {/* 왼쪽 빈칸 */}
+                      {Array(leftPad).fill(0).map((_, i) =>
+                        <div key={`lp${i}`} style={{ width: "18vw", minWidth: 72, maxWidth: 108, marginRight: "2vw", background: "none" }} />
+                      )}
+                      {/* 카드 */}
+                      {row.map((img, idx2) => {
+                        const idx = rIdx * grid.cols + idx2;
+                        return (
+                          <button
+                            key={idx}
+                            className="card-btn
