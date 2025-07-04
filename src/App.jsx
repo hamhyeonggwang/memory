@@ -12,16 +12,6 @@ function getGrid(numCards, width) {
 function shuffle(arr) {
   return arr.slice().sort(() => Math.random() - 0.5);
 }
-function isMobile() {
-  return window.innerWidth <= 600;
-}
-function getRowsForMobile(cards, cols) {
-  const rows = [];
-  for (let i = 0; i < cards.length; i += cols) {
-    rows.push(cards.slice(i, i + cols));
-  }
-  return rows;
-}
 const MIN_STAGE = 1;
 const MAX_STAGE = 10;
 
@@ -43,10 +33,6 @@ export default function App() {
   const [dark, setDark] = useState(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const cardBtnRefs = useRef([]);
-
-  // 로고/이름
-  const radiotLogo = "/logo.png";
-  const creatorName = "RADIOT LAB";
 
   // 반응형
   useEffect(() => {
@@ -423,19 +409,22 @@ export default function App() {
         transform-style: preserve-3d;
       }
       .card-inner.flipped { transform: rotateY(180deg);}
-      .card-front, .card-back {
-        position: absolute; width: 100%; height: 100%; left: 0; top: 0;
+      .card-back, .card-front {
+        position: absolute;
+        width: 100%; height: 100%; left: 0; top: 0;
         border-radius: 1.4rem;
         backface-visibility: hidden;
         display: flex; align-items: center; justify-content: center;
       }
-      .card-front { z-index: 2; background: var(--card-front);}
       .card-back {
         background: var(--card-back);
         color: #fff5ad;
-        font-size: 2.3rem; font-weight: bold;
+        font-size: 2.3rem;
+        font-weight: bold;
+      }
+      .card-front {
+        background: var(--card-front);
         transform: rotateY(180deg);
-        z-index: 1;
       }
       .card-img {
         width: 100%; height: 100%; object-fit: cover; object-position: center;
@@ -566,28 +555,29 @@ export default function App() {
           <>
             {/* 카드판 */}
             <div className="card-grid">
-  {cards.map((img, idx) => (
-    <button
-      key={idx}
-      ref={el => cardBtnRefs.current[idx] = el}
-      className="card-btn"
-      onClick={() => handleFlip(idx)}
-      style={{
-        opacity: hinting ? 0.97 : 1
-      }}
-      disabled={hinting || flipped.length === 2 || flipped.includes(idx) || matched.includes(idx)}
-      tabIndex={0}
-    >
-      <div className={`card-inner${flipped.includes(idx) || matched.includes(idx) ? " flipped" : ""}`}>
-        <div className="card-back">?</div>
-        <div className="card-front">
-          <img src={img} alt="card" className="card-img" />
-        </div>
-      </div>
-    </button>
-  ))}
-</div>
-
+              {cards.map((img, idx) => (
+                <button
+                  key={idx}
+                  ref={el => cardBtnRefs.current[idx] = el}
+                  className="card-btn"
+                  onClick={() => handleFlip(idx)}
+                  style={{
+                    opacity: hinting ? 0.97 : 1
+                  }}
+                  disabled={
+                    hinting || flipped.length === 2 || flipped.includes(idx) || matched.includes(idx)
+                  }
+                  tabIndex={0}
+                >
+                  <div className={`card-inner${(flipped.includes(idx) || matched.includes(idx)) ? " flipped" : ""}`}>
+                    <div className="card-back">?</div>
+                    <div className="card-front">
+                      <img src={img} alt="card" className="card-img" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
             {/* 힌트 버튼 */}
             <button
               onClick={handleHint}
@@ -638,8 +628,8 @@ export default function App() {
         )}
         {/* 제작자 표기 */}
         <div className="creator-box">
-          <img src={radiotLogo} alt="RADIOT LAB 로고" className="logo-img" />
-          <span>by <b>{creatorName}</b></span>
+          <img src="/logo.png" alt="RADIOT LAB 로고" className="logo-img" />
+          <span>by <b>RADIOT LAB</b></span>
         </div>
       </div>
     </div>
