@@ -543,6 +543,7 @@ export default function App() {
               onClick={() => startStage(MIN_STAGE)}
               disabled={selectedImages.length < 2}
               className="btn-nice"
+              style={{ color: "#222" }}
             >
               게임 시작하기
             </button>
