@@ -371,6 +371,7 @@ export default function App() {
       .card-grid {
         display: grid;
         gap: 1.7rem;
+        column-gap: 1.0rem;
         width: 100%;
         justify-content: center;
         margin-bottom: 2vw;
