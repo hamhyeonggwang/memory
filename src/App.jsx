@@ -39,7 +39,7 @@ export default function App() {
   const [grid, setGrid] = useState({ rows: 2, cols: 2 });
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [hinting, setHinting] = useState(false);
-  const [focusIdx, setFocusIdx] = useState(0); // 키보드 포커스용
+  const [focusIdx, setFocusIdx] = useState(0);
   const [dark, setDark] = useState(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const cardBtnRefs = useRef([]);
@@ -235,7 +235,7 @@ export default function App() {
     const handleKeyDown = (e) => {
       if (cards.length === 0) return;
       let nextIdx = focusIdx;
-      const { cols, rows } = grid;
+      const { cols } = grid;
       switch (e.key) {
         case "ArrowRight":
           nextIdx = (focusIdx + 1) % cards.length; break;
@@ -267,7 +267,7 @@ export default function App() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [focusIdx, grid, gameStarted, showClearPopup, cards, handleFlip]);
+  }, [focusIdx, grid, gameStarted, showClearPopup, cards]);
 
   // 모달 키보드
   useEffect(() => {
@@ -455,4 +455,192 @@ export default function App() {
         cursor: pointer;
         transition: background 0.15s, color 0.15s;
       }
-      .btn-nice:disabled { opacity
+      .btn-nice:disabled { opacity: 0.45; }
+      .btn-nice:active { background: var(--btn-bg-sel);}
+      .info-txt { font-size: 0.97em; color: #888;}
+      .try-txt { color: #ff8eb7; font-weight: bold; font-size: 1.13rem; }
+      .success-txt { color: #2cd67e; font-weight: bold; font-size: 1.2em; margin-top:1vw;}
+      .creator-box {
+        margin-top: 2vw;
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: #3b4653;
+        background: #fff8f2cc;
+        border-radius: 1.2em;
+        padding: 0.3em 1.2em 0.3em 0.7em;
+        box-shadow: 0 2px 8px #ffe0ee36;
+      }
+      .logo-img {
+        width: 32px; height: 32px; border-radius: 50%; background: #fff;
+        border: 1.5px solid #ffe3f4;
+        object-fit: cover;
+        margin-right: 0.1em;
+      }
+      @media (max-width: 700px) {
+        .card-grid { gap: 4vw; max-width: 98vw; min-width: 0; }
+        .card-btn {
+          width: 32vw; height: 38vw; min-width: 28vw; min-height: 33vw; max-width: 45vw; max-height: 56vw;
+          border-radius: 1.7rem;
+        }
+      }
+      `}
+      </style>
+      <div className="card-panel">
+        <div className="game-title">memory game</div>
+        {/* 단계 네비: 오른쪽 상단 */}
+        {gameStarted &&
+          <div className="stage-nav-wrap">
+            <div className="stage-nav">
+              {Array.from({ length: Math.min(selectedImages.length - 1, MAX_STAGE) }, (_, idx) => {
+                const s = idx + 1;
+                return (
+                  <button
+                    key={s}
+                    className={`stage-btn${s === stage ? " selected" : ""}`}
+                    onClick={() => handleStageSelect(s)}
+                    disabled={s > selectedImages.length - 1}
+                  >
+                    {s}단계
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        }
+        {/* 이미지 업로드, 게임 시작 전만 */}
+        {!gameStarted && (
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <label style={{ marginBottom: "0.7em", color: "#aa68b6", fontWeight: "500" }}>
+              최대 12장의 이미지를 선택하세요
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              style={{
+                marginBottom: "0.7em",
+                border: "1.5px solid #ffe3f4",
+                borderRadius: "0.8em",
+                padding: "0.3em 1em",
+                background: "#fffaf3",
+                fontSize: "1em"
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '1vw', flexWrap: 'wrap', margin: '1vw 0', justifyContent:"center" }}>
+              {uploadedImages.map((img, i) => (
+                <label key={i} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight:"0.4em" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedImages.includes(img)}
+                    onChange={() => handleSelectImage(img)}
+                    disabled={
+                      (selectedImages.length <= 2 && selectedImages.includes(img)) ||
+                      (!selectedImages.includes(img) && selectedImages.length >= 12)
+                    }
+                    style={{ marginBottom: "0.1em" }}
+                  />
+                  <img src={img} alt="" style={{ width: 38, height: 38, borderRadius: 8, border: '1.5px solid #ffe3f4', background:"#fff" }} />
+                </label>
+              ))}
+            </div>
+
+            <button
+              onClick={() => startStage(MIN_STAGE)}
+              disabled={selectedImages.length < 2}
+              className="btn-nice"
+            >
+              1단계부터 시작
+            </button>
+            <div className="info-txt" style={{ marginTop: "0.5em" }}>
+              ※ 사진은 브라우저 내에서만 사용됩니다.
+            </div>
+          </div>
+        )}
+        {/* 게임 진행 화면 */}
+        {gameStarted && (
+          <>
+            {/* 카드판 */}
+            <div className="card-grid">
+              {cards.map((img, idx) => (
+                <button
+                  key={idx}
+                  ref={el => cardBtnRefs.current[idx] = el}
+                  className="card-btn"
+                  onClick={() => handleFlip(idx)}
+                  style={{
+                    opacity: hinting ? 0.97 : 1
+                  }}
+                  disabled={hinting}
+                  tabIndex={0}
+                >
+                  <div className={`card-inner${flipped.includes(idx) || matched.includes(idx) ? " flipped" : ""}`}>
+                    <div className="card-front">
+                      <img src={img} alt="card" className="card-img" />
+                    </div>
+                    <div className="card-back">?</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {/* 힌트 버튼 */}
+            <button
+              onClick={handleHint}
+              className="btn-nice"
+              style={{ marginBottom: '0.7em' }}
+              disabled={hinting}
+            >
+              🔍 힌트 보기
+            </button>
+            <div className="try-txt" style={{ margin: "1vw" }}>시도: {tries}</div>
+            <button onClick={handleRestart} className="btn-nice" style={{ marginTop: '1vw', marginBottom: "0.3vw" }}>
+              다시 섞기
+            </button>
+            <button onClick={handleGoHome} className="btn-nice" style={{ marginTop: '0.4em', background: "#f8f6fa", color: "#a096b6" }}>
+              처음으로
+            </button>
+            {/* 스테이지 클리어 팝업 */}
+            {showClearPopup && (
+              <div style={{
+                position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh",
+                background: "rgba(30,23,45,0.23)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 40
+              }}>
+                <div style={{
+                  background: "var(--modal-bg)",
+                  borderRadius: "1.4em",
+                  boxShadow: "var(--modal-shadow)",
+                  padding: "2.3em 2.5em",
+                  minWidth: 270, maxWidth: 90+"vw",
+                  display: "flex", flexDirection: "column", alignItems: "center"
+                }}>
+                  <div className="success-txt" style={{ fontSize: "1.4em", marginBottom: "1.2em" }}>
+                    {stage < Math.min(selectedImages.length-1, MAX_STAGE)
+                      ? "클리어! 🎉"
+                      : "최고 단계 클리어! 🎉"}
+                  </div>
+                  {stage < Math.min(selectedImages.length-1, MAX_STAGE) &&
+                    <button onClick={() => { setShowClearPopup(false); handleNextStage(); }} className="btn-nice" autoFocus>
+                      다음 단계로!
+                    </button>
+                  }
+                  <button onClick={() => { setShowClearPopup(false); handleGoHome(); }} className="btn-nice" style={{ marginTop: "1em", background: "#eae6f0", color: "#8765b3" }}>
+                    처음으로
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        {/* 제작자 표기 */}
+        <div className="creator-box">
+          <img src={radiotLogo} alt="RADIOT LAB 로고" className="logo-img" />
+          <span>by <b>{creatorName}</b></span>
+        </div>
+      </div>
+    </div>
+  );
+}
