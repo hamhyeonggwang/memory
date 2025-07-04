@@ -544,7 +544,7 @@ export default function App() {
               disabled={selectedImages.length < 2}
               className="btn-nice"
             >
-              1단계부터 시작
+              게임 시작하기
             </button>
             <div className="info-txt" style={{ marginTop: "0.5em" }}>
               ※ 사진은 브라우저 내에서만 사용됩니다.
