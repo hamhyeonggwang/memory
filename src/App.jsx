@@ -566,27 +566,28 @@ export default function App() {
           <>
             {/* 카드판 */}
             <div className="card-grid">
-              {cards.map((img, idx) => (
-                <button
-                  key={idx}
-                  ref={el => cardBtnRefs.current[idx] = el}
-                  className="card-btn"
-                  onClick={() => handleFlip(idx)}
-                  style={{
-                    opacity: hinting ? 0.97 : 1
-                  }}
-                  disabled={hinting}
-                  tabIndex={0}
-                >
-                  <div className={`card-inner${flipped.includes(idx) || matched.includes(idx) ? " flipped" : ""}`}>
-                    <div className="card-front">
-                      <img src={img} alt="card" className="card-img" />
-                    </div>
-                    <div className="card-back">?</div>
-                  </div>
-                </button>
-              ))}
-            </div>
+  {cards.map((img, idx) => (
+    <button
+      key={idx}
+      ref={el => cardBtnRefs.current[idx] = el}
+      className="card-btn"
+      onClick={() => handleFlip(idx)}
+      style={{
+        opacity: hinting ? 0.97 : 1
+      }}
+      disabled={hinting || flipped.length === 2 || flipped.includes(idx) || matched.includes(idx)}
+      tabIndex={0}
+    >
+      <div className={`card-inner${flipped.includes(idx) || matched.includes(idx) ? " flipped" : ""}`}>
+        <div className="card-back">?</div>
+        <div className="card-front">
+          <img src={img} alt="card" className="card-img" />
+        </div>
+      </div>
+    </button>
+  ))}
+</div>
+
             {/* 힌트 버튼 */}
             <button
               onClick={handleHint}
