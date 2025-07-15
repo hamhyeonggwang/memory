@@ -37,8 +37,7 @@ export default function App() {
   const [focusIdx, setFocusIdx] = useState(0);
   const [dark, setDark] = useState(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-  // 카드 랜덤 이모지 매핑
-  const [cardEmojis, setCardEmojis] = useState([]);
+  // 카드 랜덤 이모지 매핑 제거(뒷면은 항상 '?')
 
   const cardBtnRefs = useRef([]);
 
@@ -125,7 +124,7 @@ export default function App() {
     setHinting(false);
     setFocusIdx(0);
     // 카드별 이모지 랜덤 배정
-    setCardEmojis(shuffle([...EMOJIS]).slice(0, tempCards.length));
+    // setCardEmojis(shuffle([...EMOJIS]).slice(0, tempCards.length)); // 제거
     setTimeout(() => cardBtnRefs.current[0]?.focus(), 100);
   };
 
@@ -607,28 +606,42 @@ export default function App() {
                 fontSize: "1em"
               }}
             />
-
             <div style={{ display: 'flex', gap: '1vw', flexWrap: 'wrap', margin: '1vw 0', justifyContent:"center" }}>
-              {uploadedImages.map((img, i) => (
-                <label key={i} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight:"0.4em" }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedImages.includes(img)}
-                    onChange={() => handleSelectImage(img)}
-                    disabled={
-                      (selectedImages.length <= 2 && selectedImages.includes(img)) ||
-                      (!selectedImages.includes(img) && selectedImages.length >= 12)
-                    }
-                    style={{ marginBottom: "0.1em" }}
-                  />
-                  <img src={img} alt="" style={{ width: 38, height: 38, borderRadius: 8, border: '1.5px solid #ffe3f4', background:"#fff" }} />
-                </label>
-              ))}
+              {uploadedImages.length > 0 ? (
+                uploadedImages.map((img, i) => (
+                  <label key={i} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight:"0.4em" }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedImages.includes(img)}
+                      onChange={() => handleSelectImage(img)}
+                      disabled={
+                        (selectedImages.length <= 2 && selectedImages.includes(img)) ||
+                        (!selectedImages.includes(img) && selectedImages.length >= 12)
+                      }
+                      style={{ marginBottom: "0.1em" }}
+                    />
+                    <img src={img} alt="" style={{ width: 38, height: 38, borderRadius: 8, border: '1.5px solid #ffe3f4', background:"#fff" }} />
+                  </label>
+                ))
+              ) : (
+                // 업로드 이미지가 없으면 이모지 12종을 카드로 사용
+                EMOJIS.slice(0, 12).map((emoji, i) => (
+                  <div key={i} style={{ width: 38, height: 38, borderRadius: 8, border: '1.5px solid #ffe3f4', background: "#fff", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.7em', marginRight: '0.4em' }}>{emoji}</div>
+                ))
+              )}
             </div>
-
             <button
-              onClick={() => startStage(MIN_STAGE)}
-              disabled={selectedImages.length < 2}
+              onClick={() => {
+                if (selectedImages.length < 2 && uploadedImages.length === 0) {
+                  // 사진이 없으면 이모지 12종으로 카드 세팅
+                  setUploadedImages([]);
+                  setSelectedImages(EMOJIS.slice(0, 12));
+                  setTimeout(() => startStage(MIN_STAGE), 100);
+                } else {
+                  startStage(MIN_STAGE);
+                }
+              }}
+              disabled={uploadedImages.length > 0 && selectedImages.length < 2}
               className="btn-nice"
               style={{ color: "#222" }}
             >
@@ -655,12 +668,12 @@ export default function App() {
                   tabIndex={0}
                 >
                   <div className={`card-inner${(flipped.includes(idx) || matched.includes(idx)) ? " flipped" : ""}`}>
-                    <div className="card-back">{cardEmojis[idx % cardEmojis.length] || "?"}</div>
+                    <div className="card-back">?</div>
                     <div className="card-front">
                       {img.startsWith("data:image/") ? (
                         <img src={img} alt="card" className="card-img" />
                       ) : (
-                        <span style={{ fontSize: "2.3rem" }}>{cardEmojis[idx % cardEmojis.length] || "?"}</span>
+                        <span style={{ fontSize: "3.2rem", display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>{img}</span>
                       )}
                     </div>
                   </div>
