@@ -15,6 +15,11 @@ function shuffle(arr) {
 const MIN_STAGE = 1;
 const MAX_STAGE = 10;
 
+// 동물/과일 이모지 세트
+const EMOJIS = [
+  "🐻", "🍎", "🍓", "🐱", "🦆", "🍌", "🍊", "🍉", "🐶", "🍒", "🦊", "🍇"
+];
+
 export default function App() {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -31,6 +36,9 @@ export default function App() {
   const [hinting, setHinting] = useState(false);
   const [focusIdx, setFocusIdx] = useState(0);
   const [dark, setDark] = useState(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  // 카드 랜덤 이모지 매핑
+  const [cardEmojis, setCardEmojis] = useState([]);
 
   const cardBtnRefs = useRef([]);
 
@@ -116,6 +124,8 @@ export default function App() {
     setShowClearPopup(false);
     setHinting(false);
     setFocusIdx(0);
+    // 카드별 이모지 랜덤 배정
+    setCardEmojis(shuffle([...EMOJIS]).slice(0, tempCards.length));
     setTimeout(() => cardBtnRefs.current[0]?.focus(), 100);
   };
 
@@ -279,6 +289,15 @@ export default function App() {
   // ----------- UI ----------- //
   return (
     <div className={`main-bg${dark ? " dark" : ""}`}>
+      {/* 배경 소품 */}
+      <div className="bg-decor">
+        <div className="cloud cloud1" />
+        <div className="cloud cloud2" />
+        <div className="star star1" />
+        <div className="star star2" />
+        <div className="sparkle sparkle1" />
+        <div className="sparkle sparkle2" />
+      </div>
       <style>{`
       :root {
         --main-bg: ${dark ? "#231e33" : "#fffbe7"};
@@ -469,6 +488,74 @@ export default function App() {
         object-fit: cover;
         margin-right: 0.1em;
       }
+      .bg-decor {
+        position: fixed; z-index: 0; width: 100vw; height: 100vh; left: 0; top: 0; pointer-events: none;
+      }
+      .cloud {
+        position: absolute; background: #fff; border-radius: 50%; opacity: 0.55;
+        box-shadow: 40px 0 60px #fff8, 80px 0 80px #fff6;
+      }
+      .cloud1 { width: 120px; height: 60px; left: 8vw; top: 8vh; }
+      .cloud2 { width: 90px; height: 44px; right: 10vw; top: 18vh; }
+      .star {
+        position: absolute; width: 18px; height: 18px; background: #ffe066;
+        clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        opacity: 0.7;
+      }
+      .star1 { left: 22vw; top: 32vh; }
+      .star2 { right: 18vw; top: 12vh; }
+      .sparkle {
+        position: absolute; width: 14px; height: 14px; background: #ffd6fa;
+        border-radius: 50%; opacity: 0.6;
+        box-shadow: 0 0 18px 6px #ffd6fa99;
+      }
+      .sparkle1 { left: 12vw; top: 68vh; }
+      .sparkle2 { right: 14vw; top: 54vh; }
+      /* 카드 스타일 개선 */
+      .card-btn {
+        border-radius: 1.5rem !important;
+        border: 2.5px solid #ffe3f4 !important;
+        box-shadow: 0 6px 24px 2px #ffe3f455 !important;
+        background: #fffbe7 !important;
+        transition: box-shadow 0.18s, transform 0.13s;
+      }
+      .card-btn:active { transform: scale(0.97); }
+      .card-inner { border-radius: 1.2rem; }
+      .card-back {
+        background: #ffe3f4 !important;
+        color: #ffb347 !important;
+        font-size: 2.5rem !important;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Nanum Square Round', Arial, sans-serif;
+      }
+      .card-front {
+        background: #fff !important;
+        border-radius: 1.2rem;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .card-img {
+        width: 80%; height: 80%; object-fit: contain; border-radius: 1rem;
+        background: #fff; display: block;
+        box-shadow: 0 2px 8px #ffe3f455;
+      }
+      /* 버튼, 점수판 등 스타일 */
+      .btn-nice, .stage-btn {
+        border-radius: 1.2em !important;
+        background: linear-gradient(90deg, #fffbe7, #ffe3f4 70%) !important;
+        color: #c84070 !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 7px #ffe0ee30 !important;
+        border: 1.5px solid #ffe3f4 !important;
+      }
+      .btn-nice:active, .stage-btn:active {
+        background: #ffe3f4 !important;
+        color: #ff58aa !important;
+      }
+      .try-txt {
+        color: #ff8eb7 !important;
+        font-weight: bold !important;
+        font-size: 1.13rem !important;
+      }
       @media (max-width: 700px) {
         .card-grid { gap: 4vw; max-width: 98vw; min-width: 0; }
         .card-btn {
@@ -563,18 +650,18 @@ export default function App() {
                   ref={el => cardBtnRefs.current[idx] = el}
                   className="card-btn"
                   onClick={() => handleFlip(idx)}
-                  style={{
-                    opacity: hinting ? 0.97 : 1
-                  }}
-                  disabled={
-                    hinting || flipped.length === 2 || flipped.includes(idx) || matched.includes(idx)
-                  }
+                  style={{ opacity: hinting ? 0.97 : 1 }}
+                  disabled={hinting || flipped.length === 2 || flipped.includes(idx) || matched.includes(idx)}
                   tabIndex={0}
                 >
                   <div className={`card-inner${(flipped.includes(idx) || matched.includes(idx)) ? " flipped" : ""}`}>
-                    <div className="card-back">?</div>
+                    <div className="card-back">{cardEmojis[idx % cardEmojis.length] || "?"}</div>
                     <div className="card-front">
-                      <img src={img} alt="card" className="card-img" />
+                      {img.startsWith("data:image/") ? (
+                        <img src={img} alt="card" className="card-img" />
+                      ) : (
+                        <span style={{ fontSize: "2.3rem" }}>{cardEmojis[idx % cardEmojis.length] || "?"}</span>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -630,8 +717,8 @@ export default function App() {
         )}
         {/* 제작자 표기 */}
         <div className="creator-box">
-          <img src="/logo.png" alt="RADIOT LAB 로고" className="logo-img" />
-          <span>by <b>RADIOT LAB</b></span>
+          <img src="/logo.png" alt="R.OTi LAB 로고" className="logo-img" />
+          <span>by <b>R.OTi LAB</b></span>
         </div>
       </div>
     </div>
